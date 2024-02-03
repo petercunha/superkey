@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>SuperKey</title>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"
+			integrity="sha512-k2wo/BkbloaRU7gc/RkCekHr4IOVe10kYxJ/Q8dRPl7u3YshAQmg3WfZtIcseEk+nGBdK03fHBeLgXTxRmWCLQ=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		></script>
+	</head>
+	<body>
+		<br />
+		<br />
+
+		<div style="display: flex; justify-content: center">
+			<svg id="barcode"></svg>
+		</div>
+
+		<br />
+		<br />
+
+		<button onclick="crack()">Brute force sauna password</button>
+		<button onclick="stop()">Stop</button>
+		<br />
+		<br />
+		<label>Start at code:</label>
+		<input type="number" value="0" id="start" />
+		<br />
+
+		<label>End at code:</label>
+		<input type="number" value="99999" id="end" />
+		<br />
+
+		<label>Sleep interval (ms):</label>
+		<input type="number" value="100" id="interval" />
+		<br />
+		<label>Height:</label>
+		<input type="number" value="50" id="height" />
+		<br />
+		<label>Width scale:</label>
+		<input type="number" value="2" id="width" />
+		<br />
+		<label>Random order:</label>
+		<input type="checkbox" id="random" />
+		<br />
+		<br />
+
+		<button onclick="tryCode()">Try code</button>
+		<br />
+		<br />
+		<label>Code:</label>
+		<input type="number" value="13517" min="0" id="exactCode" />
+		<br />
+		<br />
+
+		<script>
+			let loopin = true
+			tryCode(0)
+
+			function tryCode(x) {
+				loopin = false
+
+				const height = parseInt(document.getElementById('height').value)
+				const width = parseInt(document.getElementById('width').value)
+				const num =
+					x !== undefined
+						? String(x).padStart(5, '0')
+						: String(document.getElementById('exactCode').value).padStart(
+								5,
+								'0'
+						  )
+
+				JsBarcode('#barcode', num, {
+					format: 'CODE39',
+					height,
+					width,
+				})
+			}
+
+			async function crack() {
+				loopin = true
+
+				const start = parseInt(document.getElementById('start').value)
+				const end = parseInt(document.getElementById('end').value)
+				const interval = parseInt(document.getElementById('interval').value)
+				const random = document.getElementById('random').checked
+				const height = parseInt(document.getElementById('height').value)
+				const width = parseInt(document.getElementById('width').value)
+
+				if (random) {
+					let arr = new Uint32Array(end - start + 1)
+					for (let i = start; i <= end && loopin; i++) {
+						arr[i - start] = i
+					}
+					arr.sort(() => Math.random() - 0.5)
+					for (let i = start; i <= end && loopin; i++) {
+						JsBarcode('#barcode', String(arr[i - start]).padStart(5, '0'), {
+							format: 'CODE39',
+							height,
+						})
+						await sleep(interval)
+					}
+				} else {
+					for (let i = start; i <= end && loopin; i++) {
+						JsBarcode('#barcode', String(i).padStart(5, '0'), {
+							format: 'CODE39',
+							height,
+							width,
+						})
+						await sleep(interval)
+					}
+				}
+			}
+
+			function stop() {
+				loopin = false
+
+				const height = parseInt(document.getElementById('height').value)
+				const width = parseInt(document.getElementById('width').value)
+
+				JsBarcode('#barcode', String(0).padStart(5, '0'), {
+					format: 'CODE39',
+					height,
+					width,
+				})
+			}
+
+			async function sleep(ms) {
+				return new Promise((r) => setTimeout(r, ms))
+			}
+		</script>
+	</body>
+</html>
